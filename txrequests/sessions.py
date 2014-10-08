@@ -64,6 +64,8 @@ class Session(requestsSession):
         happens in the background thread.
         """
         def func(d):
+            """Callbacks the deferred d upon request completion/error.
+            """
             try:
                 background_callback = kwargs.pop('background_callback', None)
                 res = requestsSession.request(self, *args, **kwargs)
@@ -74,5 +76,5 @@ class Session(requestsSession):
                 reactor.callFromThread(d.errback, e)
 
         d = defer.Deferred()
-        self.pool.callInThread(func, d)
+        self.pool.callInThread(func, d, kwargs)
         return d
