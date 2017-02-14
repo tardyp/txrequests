@@ -77,5 +77,5 @@ class Session(requestsSession):
                 reactor.callFromThread(d.errback, e)
 
         d = defer.Deferred()
-        self.pool.callInThread(func, d)
+        self.pool.callInThread(func, d, kwargs)
         return d
