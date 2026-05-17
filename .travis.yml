@@ -8,5 +8,6 @@ env:
 install:
   - pip install -U pip
   - "[ $TWISTED = latest ] || pip install Twisted==$TWISTED"
+  - pip install pytest pytest-httpbin
   - pip install .
 script: trial test_txrequests.py
