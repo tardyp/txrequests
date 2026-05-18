@@ -4,32 +4,36 @@
 """Tests for Requests."""
 
 from requests import Response
-from os import environ
 from txrequests import Session
+from httpbin import app as httpbin_app
+from pytest_httpbin.serve import Server
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
-HTTPBIN = environ.get('HTTPBIN_URL', 'http://httpbin.org/')
-
-def httpbin(*suffix):
-    """Returns url for HTTPBIN resource."""
-    return HTTPBIN + '/'.join(suffix)
-
 
 class RequestsTestCase(TestCase):
+
+    def setUp(self):
+        self._httpbin_server = self.enterContext(
+            Server(application=httpbin_app)
+        )
+
+    def _httpbin(self, *suffix):
+        """Returns url for httpbin resource."""
+        return self._httpbin_server.join('/'.join(suffix))
 
     @defer.inlineCallbacks
     def test_session(self):
         # basic futures get
         with Session() as sess:
-            d = sess.get(httpbin('get'))
+            d = sess.get(self._httpbin('get'))
             self.assertIsInstance(d, defer.Deferred)
             resp = yield d
             self.assertIsInstance(resp, Response)
             self.assertEqual(200, resp.status_code)
 
             # non-200, 404
-            d = sess.get(httpbin('status/404'))
+            d = sess.get(self._httpbin('status/404'))
             resp = yield d
             self.assertEqual(404, resp.status_code)
 
@@ -40,7 +44,7 @@ class RequestsTestCase(TestCase):
                 r.data = r.json()
                 return r
 
-            d = sess.get(httpbin('get'), background_callback=cb)
+            d = sess.get(self._httpbin('get'), background_callback=cb)
             # this should block until complete
             resp = yield d
             self.assertEqual(200, resp.status_code)
@@ -50,7 +54,7 @@ class RequestsTestCase(TestCase):
             def rasing_cb(s, r):
                 raise Exception('boom')
 
-            d = sess.get(httpbin('get'), background_callback=rasing_cb)
+            d = sess.get(self._httpbin('get'), background_callback=rasing_cb)
             raised = False
             try:
                 resp = yield d
@@ -77,12 +81,12 @@ class RequestsTestCase(TestCase):
     def test_redirect(self):
         """ Tests for the ability to cleanly handle redirects. """
         with Session() as sess:
-            d = sess.get(httpbin('redirect-to?url=get'))
+            d = sess.get(self._httpbin('redirect-to?url=get'))
             resp = yield d
             self.assertIsInstance(resp, Response)
             self.assertEqual(200, resp.status_code)
 
-            d = sess.get(httpbin('redirect-to?url=status/404'))
+            d = sess.get(self._httpbin('redirect-to?url=status/404'))
             resp = yield d
             self.assertEqual(404, resp.status_code)
 
