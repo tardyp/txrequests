@@ -107,6 +107,12 @@ for a simple example take json parsing.
             # data will have been attached to the response object in the background
             pprint(response.data)
 
+Python 2 Only
+=============
+
+Python 2.6 and 2.7 are currently supported. Python 3 is not.
+
+
 Installation
 ============
 
